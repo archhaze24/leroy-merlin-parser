@@ -112,10 +112,10 @@ if (state === undefined) {
 }
 console.log('all good, starting up!');
 
-console.log('parsing stores');
-await parseStoresAndSaveInDb(page, prisma);
-console.log('done parsing stores');
-
 console.log('parsing categories');
 await parseCategoriesAndSaveInDb(page, prisma, state);
 console.log('done parsing categories');
+
+console.log('parsing stores');
+await parseStoresAndSaveInDb(page, prisma);
+console.log('done parsing stores');
