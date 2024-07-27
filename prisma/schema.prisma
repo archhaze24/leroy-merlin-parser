@@ -8,19 +8,29 @@ datasource db {
 }
 
 model Category {
-  id   Int    @id @default(autoincrement())
-  name String
-  url  String @unique
+  id              Int               @id @default(autoincrement())
+  name            String
+  url             String            @unique
+  CategoryProduct CategoryProduct[]
 }
 
 model Product {
-  id                  Int    @id @unique
+  id                  Int               @id @unique
   name                String
-  categoryIds         Int[]
   price               Int
   priceCurrency       String
   quantity            Int
   availableInStoreIds Int[]
+  CategoryProduct     CategoryProduct[]
+}
+
+model CategoryProduct {
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  Int
+  categories Category @relation(fields: [categoryId], references: [id])
+  categoryId Int
+
+  @@id([categoryId, productId])
 }
 
 model Store {
