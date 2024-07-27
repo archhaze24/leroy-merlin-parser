@@ -75,7 +75,7 @@ async function parseStoresAndSaveInDb(page, db) {
             const response = await fetch(`https://api.lemanapro.ru/experience/LeroymerlinWebsite/v1/navigation-pdp-api/get-regions-and-stores?x-api-key=${API_KEY}`, {
                 method: 'GET',
                 headers: {
-                    'Cookie': '_frt_=03684b824c41d5692fdd278e340a0d95; _regionID=34; daysToHide=14; loadLmCookie=true; uid_experiment=687e0c979f53a84e5167fa3f62a56f85; pageExperiments=pdp_complements_super_duper:B; cookie_accepted=true; qrator_jsr=1722102507.331.9dXxaXwgM0Qd9Fev-rgkqo7t98kn9njvfvp5mg7n0fnor50kj-00; qrator_jsid=1722102507.331.9dXxaXwgM0Qd9Fev-hc9bk9h8vnnlr3v13k5o33pdj0mteuk7'
+                    'Cookie': process.env.COOKIE
                 }
             })
             if (!response.ok) {
@@ -113,9 +113,9 @@ if (state === undefined) {
 console.log('all good, starting up!');
 
 
-// console.log('parsing categories');
-//await parseCategoriesAndSaveInDb(page, prisma, state);
-// console.log('done parsing categories');
+console.log('parsing categories');
+await parseCategoriesAndSaveInDb(page, prisma, state);
+console.log('done parsing categories');
 
 console.log('parsing stores');
 await parseStoresAndSaveInDb(page, prisma);
