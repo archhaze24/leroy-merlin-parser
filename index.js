@@ -49,18 +49,18 @@ async function parseCategoriesAndSaveInDb(page, db, state) {
 }
 
 async function parseStoresAndSaveInDb(page, db) {
-    let API_KEY = 'nkGKLkscp80GVAQVY8YvajPjzaFTmIS8';
+    let API_KEY = '';
     console.log('trying to get api key')
     while (true) {
         try {
-            // const state = await getState(page, `https://lemanapro.ru/product/drel-shurupovert-akkumulyatornaya-besshchetochnaya-rockfield-rf1002bk-89366403/`);
-            // if (state === undefined) {
-            //     throw new Error('state fetching error: state died')
-            // }
-            //
-            // API_KEY = state.pdp.pdp.env.API_KEY;
-            // console.log('got api key: ' + API_KEY)
-            //
+            const state = await getState(page, `https://lemanapro.ru/product/drel-shurupovert-akkumulyatornaya-besshchetochnaya-rockfield-rf1002bk-89366403/`);
+            if (state === undefined) {
+                throw new Error('state fetching error: state died')
+            }
+
+            API_KEY = state.pdp.pdp.env.API_KEY;
+            console.log('got api key: ' + API_KEY)
+
             break
         } catch (e) {
             console.error(e);
@@ -112,11 +112,10 @@ if (state === undefined) {
 }
 console.log('all good, starting up!');
 
+console.log('parsing stores');
+await parseStoresAndSaveInDb(page, prisma);
+console.log('done parsing stores');
 
 console.log('parsing categories');
 await parseCategoriesAndSaveInDb(page, prisma, state);
 console.log('done parsing categories');
-
-console.log('parsing stores');
-await parseStoresAndSaveInDb(page, prisma);
-console.log('done parsing stores');
