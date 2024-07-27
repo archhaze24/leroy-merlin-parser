@@ -1,0 +1,18 @@
+{
+  "name": "leroy-merlin-parser",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "i want to die",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kirby aka archhaze24",
+  "dependencies": {
+    "@prisma/client": "^5.17.0",
+    "dotenv": "^16.4.5",
+    "prisma": "^5.17.0",
+    "puppeteer": "^22.14.0"
+  }
+}
