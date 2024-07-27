@@ -26,7 +26,7 @@ async function parseCategoriesAndSaveInDb(page, db, state) {
 
     for (const secondLevelCategory of secondLevelCategories) {
         while (true) {
-            console.log('getting categories from route, ' + secondLevelCategory)
+            console.log('getting categories from route ' + secondLevelCategory)
             try {
                 const state = await getState(page, `https://lemanapro.ru${secondLevelCategory}`);
 
@@ -105,7 +105,13 @@ console.log('browser started')
 
 console.log('checking for cookie')
 await page.setExtraHTTPHeaders({'cookie': process.env.COOKIE});
-const state = await getState(page, "https://lemanapro.ru/catalogue/");
+let state = await getState(page, "https://lemanapro.ru/catalogue/");
+if (state === undefined) {
+    console.error("cookie is bad or expired, update it!")
+    process.exit(1);
+}
+console.log('first check passed, going to the second one')
+state = await getState(page, "https://lemanapro.ru/catalogue/");
 if (state === undefined) {
     console.error("cookie is bad or expired, update it!")
     process.exit(1);
