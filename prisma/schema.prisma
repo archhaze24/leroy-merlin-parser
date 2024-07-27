@@ -22,6 +22,7 @@ model Product {
   quantity            Int
   availableInStoreIds Int[]
   CategoryProduct     CategoryProduct[]
+  StoreProduct        StoreProduct[]
 }
 
 model CategoryProduct {
@@ -33,7 +34,17 @@ model CategoryProduct {
   @@id([categoryId, productId])
 }
 
+model StoreProduct {
+  product   Product @relation(fields: [productId], references: [id])
+  store     Store   @relation(fields: [storeId], references: [id])
+  productId Int
+  storeId   Int
+
+  @@id([productId, storeId])
+}
+
 model Store {
-  id   Int    @id @unique
-  name String
+  id           Int            @id @unique
+  name         String
+  StoreProduct StoreProduct[]
 }
