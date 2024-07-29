@@ -3,6 +3,23 @@ import puppeteer from "puppeteer";
 import {PrismaClient} from "@prisma/client";
 import 'dotenv/config'
 
+async function extendCookieDuration(browser) {
+    while (true) {
+        try {
+            const page = await browser.newPage();
+            await page.setViewport({width: 1200, height: 800});
+            await page.setCookie({name: 'qrator_jsid', value: process.env.COOKIE, url: "https://lemanapro.ru"});
+            await page.goto("https://lemanapro.ru/");
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            page.close()
+            console.log('cookie refreshed!')
+            break
+        } catch (e) {
+            console.error(`extending cookie failed, retrying: ${e}`,)
+        }
+    }
+}
+
 async function getState(page, url) {
     try {
         await page.goto(url);
@@ -26,13 +43,20 @@ async function parseCategoriesAndSaveInDb(page, db, state) {
 
     for (const secondLevelCategory of secondLevelCategories) {
         while (true) {
-            console.log('getting categories from route ' + secondLevelCategory)
+            console.log(`getting categories from route ${secondLevelCategory}`)
+            await new Promise(resolve => setTimeout(resolve, 1000));
             try {
                 const state = await getState(page, `https://lemanapro.ru${secondLevelCategory}`);
 
                 for (const thirdLevelCategory of state.plp.plp.plp.catalogueStructure.catalogue) {
-                    await db.category.create({
-                        data: {
+                    await db.category.upsert({
+                        where: {
+                            url: thirdLevelCategory.sitePath
+                        },
+                        update: {
+                            name: thirdLevelCategory.name,
+                        },
+                        create: {
                             name: thirdLevelCategory.name,
                             url: thirdLevelCategory.sitePath
                         }
@@ -41,8 +65,7 @@ async function parseCategoriesAndSaveInDb(page, db, state) {
 
                 break;
             } catch (e) {
-                console.error(e);
-                console.error('retrying to get categories for route ' + secondLevelCategory)
+                console.error(`failed to get categories from route ${secondLevelCategory}, retrying: ${e}`);
             }
         }
     }
@@ -55,16 +78,15 @@ async function parseStoresAndSaveInDb(page, db) {
         try {
             const state = await getState(page, `https://lemanapro.ru/product/drel-shurupovert-akkumulyatornaya-besshchetochnaya-rockfield-rf1002bk-89366403/`);
             if (state === undefined) {
-                throw new Error('state fetching error: state died')
+                throw new Error('state fetching error, retrying')
             }
 
             API_KEY = state.pdp.pdp.env.API_KEY;
-            console.log('got api key: ' + API_KEY)
+            console.log(`got api key: ${API_KEY}`)
 
             break
         } catch (e) {
-            console.error(e);
-            console.error('retrying to get api key');
+            console.error(`failed to get api key, retrying: ${e}`)
         }
     }
 
@@ -79,38 +101,63 @@ async function parseStoresAndSaveInDb(page, db) {
                 }
             })
             if (!response.ok) {
-                throw new Error('fetch stores failed with status code ' + response.status)
+                throw new Error(`status code ${response.status}`)
             }
             const json = await response.json();
 
             for (const store of json.availabledStores) {
                 if (store.regionId === '34') {
-                    await prisma.store.create({data: {name: store.title, id: parseInt(store.id)}})
+                    await db.store.upsert({
+                        where: {id: parseInt(store.id)},
+                        create: {name: store.title, id: parseInt(store.id)},
+                        update: {name: store.title}
+                    })
                 }
             }
 
             break
         } catch (e) {
-            console.error(e);
-            console.error('retrying to fetch stores');
+            console.error(`failed to fetch stores, retrying: ${e}`);
         }
     }
 
 }
 
+async function parse(page, db) {
+    console.log('parsing started')
+
+    console.log('parsing categories');
+    const state = await getState(page, "https://lemanapro.ru/catalogue/");
+    await parseCategoriesAndSaveInDb(page, db, state);
+    console.log('done parsing categories');
+
+    console.log('parsing stores');
+    await parseStoresAndSaveInDb(page, db);
+    console.log('done parsing stores');
+}
+
 const prisma = new PrismaClient();
+try {
+    prisma.$connect()
+} catch (e) {
+    console.error(`failed to connect prisma client: ${e}`)
+}
+console.log('database is up')
+
 const browser = await puppeteer.launch();
 const page = await browser.newPage();
-console.log('browser started')
+await page.setViewport({width: 1200, height: 800});
+console.log('browser started');
 
-console.log('checking for cookie')
-await page.setExtraHTTPHeaders({'cookie': process.env.COOKIE});
+console.log('checking for cookie');
+await page.setCookie({name: 'qrator_jsid', value: process.env.COOKIE, url: "https://lemanapro.ru"});
 let state = await getState(page, "https://lemanapro.ru/catalogue/");
 if (state === undefined) {
-    console.error("cookie is bad or expired, update it!")
+    console.error("cookie is bad or expired, update it!");
     process.exit(1);
 }
 console.log('first check passed, going to the second one')
+await page.reload()
 state = await getState(page, "https://lemanapro.ru/catalogue/");
 if (state === undefined) {
     console.error("cookie is bad or expired, update it!")
@@ -118,10 +165,10 @@ if (state === undefined) {
 }
 console.log('all good, starting up!');
 
-console.log('parsing categories');
-await parseCategoriesAndSaveInDb(page, prisma, state);
-console.log('done parsing categories');
+console.log('setting cookie time extender to run every 4 minutes')
+setInterval(() => extendCookieDuration(browser), 4 * 60 * 1000);
 
-console.log('parsing stores');
-await parseStoresAndSaveInDb(page, prisma);
-console.log('done parsing stores');
+console.log('setting parsing to run every 24 hours')
+setInterval(async () => await parse(page, prisma), 24 * 60 * 60 * 1000)
+
+await parse(page, prisma);
