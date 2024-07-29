@@ -97,7 +97,7 @@ async function parseStoresAndSaveInDb(page, db) {
             const response = await fetch(`https://api.lemanapro.ru/experience/LeroymerlinWebsite/v1/navigation-pdp-api/get-regions-and-stores?x-api-key=${API_KEY}`, {
                 method: 'GET',
                 headers: {
-                    'Cookie': process.env.COOKIE
+                    'Cookie': `qrator_jsid=${process.env.COOKIE}`
                 }
             })
             if (!response.ok) {
