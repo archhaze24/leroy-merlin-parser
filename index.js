@@ -2,22 +2,32 @@ import * as process from "node:process";
 import puppeteer from "puppeteer";
 import {PrismaClient} from "@prisma/client";
 import 'dotenv/config'
+import * as child_process from "node:child_process";
 
-async function extendCookieDuration(browser) {
-    while (true) {
-        try {
-            const page = await browser.newPage();
-            await page.setViewport({width: 1200, height: 800});
-            await page.setCookie({name: 'qrator_jsid', value: process.env.COOKIE, url: "https://lemanapro.ru"});
-            await page.goto("https://lemanapro.ru/");
-            await new Promise(resolve => setTimeout(resolve, 5000));
-            page.close()
-            console.log('cookie refreshed!')
-            break
-        } catch (e) {
-            console.error(`extending cookie failed, retrying: ${e}`,)
-        }
+async function getAndSetNewQratorKey(page) {
+    let qrator_key = '';
+    try {
+        const pythonProcessPromise = new Promise((resolve, reject) => {
+            const pythonProcess = child_process.spawn('python', ['qrator_jsid.py'])
+            pythonProcess.stdout.on('data', data => {
+                data = data.toString().trim();
+                if (data.length !== 64) {
+                    reject('can\'t get qrator_jsid')
+                }
+
+                qrator_key = data;
+                pythonProcess.kill()
+                resolve(qrator_key)
+            })
+        })
+
+        qrator_key = await pythonProcessPromise
+    } catch (e) {
+        console.error(`${e}, retrying`)
     }
+
+    console.log(`got new qrator_jsid: ${qrator_key}`)
+    await page.setCookie({name: 'qrator_jsid', value: qrator_key, url: 'https://lemanapro.ru'})
 }
 
 async function getState(page, url) {
@@ -44,7 +54,7 @@ async function parseCategoriesAndSaveInDb(page, db, state) {
     for (const secondLevelCategory of secondLevelCategories) {
         while (true) {
             console.log(`getting categories from route ${secondLevelCategory}`)
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 2000));
             try {
                 const state = await getState(page, `https://lemanapro.ru${secondLevelCategory}`);
 
@@ -97,7 +107,7 @@ async function parseStoresAndSaveInDb(page, db) {
             const response = await fetch(`https://api.lemanapro.ru/experience/LeroymerlinWebsite/v1/navigation-pdp-api/get-regions-and-stores?x-api-key=${API_KEY}`, {
                 method: 'GET',
                 headers: {
-                    'Cookie': `qrator_jsid=${process.env.COOKIE}`
+                    'Cookie': `qrator_jsid=${qrator_key}`
                 }
             })
             if (!response.ok) {
@@ -149,26 +159,12 @@ const page = await browser.newPage();
 await page.setViewport({width: 1200, height: 800});
 console.log('browser started');
 
-console.log('checking for cookie');
-await page.setCookie({name: 'qrator_jsid', value: process.env.COOKIE, url: "https://lemanapro.ru"});
-let state = await getState(page, "https://lemanapro.ru/catalogue/");
-if (state === undefined) {
-    console.error("cookie is bad or expired, update it!");
-    process.exit(1);
-}
-console.log('first check passed, going to the second one')
-await page.reload()
-state = await getState(page, "https://lemanapro.ru/catalogue/");
-if (state === undefined) {
-    console.error("cookie is bad or expired, update it!")
-    process.exit(1);
-}
-console.log('all good, starting up!');
+await getAndSetNewQratorKey(page)
+console.log('setting qrator_jsid to refresh every 4 minutes')
+setInterval(() => getAndSetNewQratorKey(page), 4 * 60 * 1000);
 
-console.log('setting cookie time extender to run every 4 minutes')
-setInterval(() => extendCookieDuration(browser), 4 * 60 * 1000);
 
 console.log('setting parsing to run every 24 hours')
-setInterval(async () => await parse(page, prisma), 24 * 60 * 60 * 1000)
+setInterval(() => parse(page, prisma), 24 * 60 * 60 * 1000)
 
-await parse(page, prisma);
+parse(page, prisma);
