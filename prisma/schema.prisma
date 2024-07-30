@@ -26,7 +26,7 @@ model Product {
 model CategoryProduct {
   product    Product  @relation(fields: [productId], references: [id])
   productId  Int
-  categories Category @relation(fields: [categoryId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
   categoryId Int
 
   @@id([categoryId, productId])

@@ -67,7 +67,7 @@ async function parseCategoriesAndSaveInDb(page, db, state) {
     for (const secondLevelCategory of secondLevelCategories) {
         while (true) {
             console.log(`getting categories from route ${secondLevelCategory}`);
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 2000));
             try {
                 const state = await getState(
                     page,
@@ -162,18 +162,17 @@ async function parseProductsAndSaveInDb(page, db) {
     for (const category of categories) {
         while (true) {
             try {
-                console.log(category.url)
                 const state = await getState(page, `https://lemanapro.ru${category.url}`);
                 const pages = Math.ceil(state.plp.plp.plp.products.productsCount / 30);
                 for (let pageNumber = 1; pageNumber <= pages; pageNumber++) {
                     while (true) {
                         try {
-                            await new Promise((resolve) => setTimeout(resolve, 1000));
+                            await new Promise((resolve) => setTimeout(resolve, 2000));
                             console.log(`getting products from category ${category.url}, page ${pageNumber}`)
                             const state = await getState(page, `https://lemanapro.ru${category.url}/?page=${pageNumber}`);
                             const products = state.plp.plp.plp.products.productsList;
                             for (const product of products) {
-                                await db.product.upsert({
+                                const productInDb = await db.product.upsert({
                                     where: {id: parseInt(product.productId)},
                                     create: {
                                         id: parseInt(product.productId),
@@ -186,6 +185,17 @@ async function parseProductsAndSaveInDb(page, db) {
                                         price: product.price.main_price,
                                         priceCurrency: product.price.currency,
                                     }
+                                })
+
+                                await db.categoryProduct.upsert({
+                                    where: {
+                                        categoryId_productId: {
+                                            productId: productInDb.id,
+                                            categoryId: category.id
+                                        }
+                                    },
+                                    create: {productId: productInDb.id, categoryId: category.id},
+                                    update: {}
                                 })
                             }
 
