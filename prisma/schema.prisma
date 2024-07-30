@@ -15,14 +15,12 @@ model Category {
 }
 
 model Product {
-  id                  Int               @id @unique
-  name                String
-  price               Int
-  priceCurrency       String
-  quantity            Int
-  availableInStoreIds Int[]
-  CategoryProduct     CategoryProduct[]
-  StoreProduct        StoreProduct[]
+  id              Int               @id @unique
+  name            String
+  price           Int
+  priceCurrency   String
+  CategoryProduct CategoryProduct[]
+  StoreProduct    StoreProduct[]
 }
 
 model CategoryProduct {
