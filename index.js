@@ -1,13 +1,17 @@
-import * as process from "node:process";
 import puppeteer from "puppeteer-extra";
 import { PrismaClient } from "@prisma/client";
 import "dotenv/config";
 import * as child_process from "node:child_process";
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+let qrator_jsid = "";
+
 async function getAndSetNewQratorKey(page) {
-  let qrator_key = "";
   try {
     const pythonProcessPromise = new Promise((resolve, reject) => {
       const pythonProcess = child_process.spawn("python", [
@@ -19,21 +23,21 @@ async function getAndSetNewQratorKey(page) {
           reject("can't get qrator_jsid");
         }
 
-        qrator_key = data;
+        qrator_jsid = data;
         pythonProcess.kill();
-        resolve(qrator_key);
+        resolve(qrator_jsid);
       });
     });
 
-    qrator_key = await pythonProcessPromise;
+    qrator_jsid = await pythonProcessPromise;
   } catch (e) {
     console.error(`${e}, retrying`);
   }
 
-  console.log(`got new qrator_jsid: ${qrator_key}`);
+  console.log(`got new qrator_jsid: ${qrator_jsid}`);
   await page.setCookie({
     name: "qrator_jsid",
-    value: qrator_key,
+    value: qrator_jsid,
     url: "https://lemanapro.ru",
   });
 }
@@ -62,7 +66,7 @@ async function parseCategoriesAndSaveInDb(page, db, state) {
   for (const secondLevelCategory of secondLevelCategories) {
     while (true) {
       console.log(`getting categories from route ${secondLevelCategory}`);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       try {
         const state = await getState(
           page,
@@ -126,7 +130,7 @@ async function parseStoresAndSaveInDb(page, db) {
         {
           method: "GET",
           headers: {
-            Cookie: `qrator_jsid=${qrator_key}`,
+            Cookie: `qrator_jsid=${qrator_jsid}`,
           },
         }
       );
@@ -155,10 +159,10 @@ async function parseStoresAndSaveInDb(page, db) {
 async function parse(page, db) {
   console.log("parsing started");
 
-  console.log("parsing categories");
-  const state = await getState(page, "https://lemanapro.ru/catalogue/");
-  await parseCategoriesAndSaveInDb(page, db, state);
-  console.log("done parsing categories");
+  // console.log("parsing categories");
+  // const state = await getState(page, "https://lemanapro.ru/catalogue/");
+  // await parseCategoriesAndSaveInDb(page, db, state);
+  // console.log("done parsing categories");
 
   console.log("parsing stores");
   await parseStoresAndSaveInDb(page, db);
