@@ -45,6 +45,11 @@ async function getAndSetNewQratorKey(page) {
 
 async function getState(page, url) {
     try {
+        await page.setCookie({
+            name: "qrator_jsid",
+            value: qrator_jsid,
+            url: "https://lemanapro.ru",
+        });
         await page.goto(url);
         return page.evaluate("window.INITIAL_STATE");
     } catch (err) {
