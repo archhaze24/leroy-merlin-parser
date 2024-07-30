@@ -162,6 +162,7 @@ async function parseProductsAndSaveInDb(page, db) {
     for (const category of categories) {
         while (true) {
             try {
+                await new Promise((resolve) => setTimeout(resolve, 5000));
                 const state = await getState(page, `https://lemanapro.ru${category.url}`);
                 const pages = Math.ceil(state.plp.plp.plp.products.productsCount / 30);
                 for (let pageNumber = 1; pageNumber <= pages; pageNumber++) {
