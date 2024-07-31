@@ -169,6 +169,10 @@ async function parseProductsAndSaveInDb(page, db) {
             try {
                 await new Promise((resolve) => setTimeout(resolve, 5000));
                 const state = await getState(page, `https://lemanapro.ru${category.url}`);
+                if ('404-header' in state) {
+                    console.log(`got 404 from category ${category.url}, skipping it!`);
+                    break
+                }
                 const pages = Math.ceil(state.plp.plp.plp.products.productsCount / 30);
                 for (let pageNumber = 1; pageNumber <= pages; pageNumber++) {
                     while (true) {
