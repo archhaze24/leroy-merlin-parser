@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 let qrator_jsid = "";
-let API_KEY = "";
+let API_KEY = "nkGKLkscp80GVAQVY8YvajPjzaFTmIS8"; // universal api key
 
 function isIterable(obj) {
     return obj != null && typeof obj[Symbol.iterator] === 'function';
@@ -210,6 +210,25 @@ async function parseProductsAndSaveInDb(page, db) {
                             const state = await getState(page, `https://lemanapro.ru${category.url}/?page=${pageNumber}`);
                             const products = state.plp.plp.plp.products.productsList;
                             for (const product of products) {
+                                await new Promise((resolve) => setTimeout(resolve, 100));
+                                const stocksRequest = await fetch("https://api.lemanapro.ru/experience/LeroymerlinWebsite/v1/navigation-pdp-api/get-stocks", {
+                                    "credentials": "include",
+                                    "headers": {
+                                        "Cookie": `qrator_jsid=${qrator_jsid}; _regionID=34; cookie_accepted=true`,
+                                        "Content-Type": "application/json",
+                                        "x-api-key": `${API_KEY}`,
+                                    },
+                                    "referrer": "https://lemanapro.ru/",
+                                    "body": `{"regionCode":"moscow","productId":"${product.productId}","unit":"шт.","currencyKey":"${product.price.currency}","preferedStores":[],"source":"Step"}`,
+                                    "method": "POST",
+                                });
+                                const stocksJSON = await stocksRequest.json();
+
+                                let onlineStocks = 0;
+                                if (stocksJSON.longtailCase.isAvailableOnline) {
+                                    onlineStocks = stocksJSON.deliveryMethods[0].maxStockAvailable
+                                }
+
                                 const productInDb = await db.product.upsert({
                                     where: {id: parseInt(product.productId)},
                                     create: {
@@ -217,13 +236,44 @@ async function parseProductsAndSaveInDb(page, db) {
                                         name: product.displayedName,
                                         price: product.price.main_price,
                                         priceCurrency: product.price.currency,
+                                        isAvailableOffline: stocksJSON.longtailCase.isAvailableOffline,
+                                        onlineStocks: onlineStocks,
+                                        isAvailableOnline: stocksJSON.longtailCase.isAvailableOnline,
+
                                     },
                                     update: {
                                         name: product.displayedName,
                                         price: product.price.main_price,
                                         priceCurrency: product.price.currency,
+                                        isAvailableOffline: stocksJSON.longtailCase.isAvailableOffline,
+                                        onlineStocks: onlineStocks,
+                                        isAvailableOnline: stocksJSON.longtailCase.isAvailableOnline,
                                     }
                                 })
+
+                                if (productInDb.isAvailableOffline) {
+                                    for (const storeStocks of stocksJSON.stocks) {
+                                        console.log(storeStocks)
+                                        await db.storeProduct.upsert({
+                                            where: {
+                                                productId_storeId: {
+                                                    storeId: parseInt(storeStocks.storeCode),
+                                                    productId: productInDb.id
+                                                }
+                                            },
+                                            create: {
+                                                storeId: parseInt(storeStocks.storeCode),
+                                                productId: productInDb.id,
+                                                stocks: storeStocks.stockValue,
+                                            },
+                                            update: {
+                                                stocks: storeStocks.stockValue,
+                                            }
+                                        })
+                                    }
+                                } else {
+                                    await db.storeProduct.deleteMany({where: {productId: productInDb.id}})
+                                }
 
                                 await db.categoryProduct.upsert({
                                     where: {
@@ -265,7 +315,6 @@ async function parse(page, db) {
     console.log("parsing stores");
     await parseStoresAndSaveInDb(page, db);
     console.log("done parsing stores");
-
 
     console.log("parsing products");
     await parseProductsAndSaveInDb(page, db);
