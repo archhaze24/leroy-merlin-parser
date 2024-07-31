@@ -25,7 +25,7 @@ const init = async () => {
   logger.info("database is up");
 
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
   });
   const page = await browser.newPage();
 
