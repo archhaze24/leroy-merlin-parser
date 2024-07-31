@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import qratorKey from "./parse/qratorKey.js";
 import getAndSetNewQratorKey from "./parse/qratorKey.js";
 import parse from "./parse/index.js";
+import useProxy from "@stableproxy/puppeteer-page-proxy";
 
 global.__filename = fileURLToPath(import.meta.url);
 global.__dirname = dirname(__filename);
@@ -21,8 +22,19 @@ const init = async () => {
 
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
+  await page.setRequestInterception(true);
   await page.setViewport({ width: 1200, height: 800 });
   console.log("browser started");
+
+  // page.on("request", async (request) => {
+  //   await useProxy(request, {
+  //     proxy: "https://217.29.53.100:12118",
+  //     method: "GET",
+  //     headers: {
+  //       "Proxy-Authorization": "Basic dDdGMkJuOkpYQkowQg==",
+  //     },
+  //   });
+  // });
 
   await qratorKey(page);
   console.log("setting qrator_jsid to refresh every 4 minutes");
