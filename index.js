@@ -10,6 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 let qrator_jsid = "";
+// noinspection SpellCheckingInspection
 let API_KEY = "nkGKLkscp80GVAQVY8YvajPjzaFTmIS8"; // universal api key
 
 function isIterable(obj) {
@@ -210,7 +211,8 @@ async function parseProductsAndSaveInDb(page, db) {
                             const state = await getState(page, `https://lemanapro.ru${category.url}/?page=${pageNumber}`);
                             const products = state.plp.plp.plp.products.productsList;
                             for (const product of products) {
-                                await new Promise((resolve) => setTimeout(resolve, 100));
+                                await new Promise((resolve) => setTimeout(resolve, 300));
+                                // noinspection SpellCheckingInspection
                                 const stocksRequest = await fetch("https://api.lemanapro.ru/experience/LeroymerlinWebsite/v1/navigation-pdp-api/get-stocks", {
                                     "credentials": "include",
                                     "headers": {
@@ -253,7 +255,6 @@ async function parseProductsAndSaveInDb(page, db) {
 
                                 if (productInDb.isAvailableOffline) {
                                     for (const storeStocks of stocksJSON.stocks) {
-                                        console.log(storeStocks)
                                         await db.storeProduct.upsert({
                                             where: {
                                                 productId_storeId: {
@@ -307,14 +308,14 @@ async function parseProductsAndSaveInDb(page, db) {
 async function parse(page, db) {
     console.log("parsing started");
 
-    console.log("parsing categories");
-    const state = await getState(page, "https://lemanapro.ru/catalogue/");
-    await parseCategoriesAndSaveInDb(page, db, state);
-    console.log("done parsing categories");
+    // console.log("parsing categories");
+    // const state = await getState(page, "https://lemanapro.ru/catalogue/");
+    // await parseCategoriesAndSaveInDb(page, db, state);
+    // console.log("done parsing categories");
 
-    console.log("parsing stores");
-    await parseStoresAndSaveInDb(page, db);
-    console.log("done parsing stores");
+    // console.log("parsing stores");
+    // await parseStoresAndSaveInDb(page, db);
+    // console.log("done parsing stores");
 
     console.log("parsing products");
     await parseProductsAndSaveInDb(page, db);
