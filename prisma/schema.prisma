@@ -15,12 +15,15 @@ model Category {
 }
 
 model Product {
-  id              Int               @id @unique
-  name            String
-  price           Int
-  priceCurrency   String
-  CategoryProduct CategoryProduct[]
-  StoreProduct    StoreProduct[]
+  id                 Int               @id @unique
+  name               String
+  price              Int
+  priceCurrency      String
+  isAvailableOffline Boolean           @default(false)
+  onlineStocks       Int               @default(0)
+  isAvailableOnline  Boolean           @default(false)
+  CategoryProduct    CategoryProduct[]
+  StoreProduct       StoreProduct[]
 }
 
 model CategoryProduct {
@@ -35,7 +38,7 @@ model CategoryProduct {
 model StoreProduct {
   product   Product @relation(fields: [productId], references: [id])
   store     Store   @relation(fields: [storeId], references: [id])
-  quantity  Int
+  stocks    Int
   productId Int
   storeId   Int
 
