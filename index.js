@@ -211,7 +211,9 @@ async function parseProductsAndSaveInDb(page, db) {
                             const state = await getState(page, `https://lemanapro.ru${category.url}/?page=${pageNumber}`);
                             const products = state.plp.plp.plp.products.productsList;
                             for (const product of products) {
-                                await new Promise((resolve) => setTimeout(resolve, 300));
+                                // todo: this is bannable. find a way to solve it
+                                await new Promise((resolve) => setTimeout(resolve, 1000));
+
                                 // noinspection SpellCheckingInspection
                                 const stocksRequest = await fetch("https://api.lemanapro.ru/experience/LeroymerlinWebsite/v1/navigation-pdp-api/get-stocks", {
                                     "credentials": "include",
@@ -308,14 +310,14 @@ async function parseProductsAndSaveInDb(page, db) {
 async function parse(page, db) {
     console.log("parsing started");
 
-    // console.log("parsing categories");
-    // const state = await getState(page, "https://lemanapro.ru/catalogue/");
-    // await parseCategoriesAndSaveInDb(page, db, state);
-    // console.log("done parsing categories");
+    console.log("parsing categories");
+    const state = await getState(page, "https://lemanapro.ru/catalogue/");
+    await parseCategoriesAndSaveInDb(page, db, state);
+    console.log("done parsing categories");
 
-    // console.log("parsing stores");
-    // await parseStoresAndSaveInDb(page, db);
-    // console.log("done parsing stores");
+    console.log("parsing stores");
+    await parseStoresAndSaveInDb(page, db);
+    console.log("done parsing stores");
 
     console.log("parsing products");
     await parseProductsAndSaveInDb(page, db);
