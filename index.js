@@ -12,6 +12,10 @@ const __dirname = dirname(__filename);
 let qrator_jsid = "";
 let API_KEY = "";
 
+function isIterable(obj) {
+    return obj != null && typeof obj[Symbol.iterator] === 'function';
+}
+
 async function getAndSetNewQratorKey(page) {
     try {
         const pythonProcessPromise = new Promise((resolve, reject) => {
@@ -70,14 +74,24 @@ async function parseCategoriesAndSaveInDb(page, db, state) {
     }
 
     for (const secondLevelCategory of secondLevelCategories) {
+        let notIterableInARow = 0;
+        let undefinedInARow = 0;
         while (true) {
             console.log(`getting categories from route ${secondLevelCategory}`);
-            await new Promise((resolve) => setTimeout(resolve, 5000));
+            await new Promise((resolve) => setTimeout(resolve, 6000));
             try {
                 const state = await getState(
                     page,
                     `https://lemanapro.ru${secondLevelCategory}`
                 );
+                if (state.plp === undefined) {
+                    undefinedInARow += 1;
+                    throw new Error('state is undefined')
+                }
+                if (!isIterable(state.plp.plp.plp.catalogueStructure.catalogue)) {
+                    notIterableInARow += 1;
+                    throw new Error('catalogue is not iterable')
+                }
 
                 for (const thirdLevelCategory of state.plp.plp.plp.catalogueStructure
                     .catalogue) {
@@ -95,11 +109,25 @@ async function parseCategoriesAndSaveInDb(page, db, state) {
                     });
                 }
 
+                undefinedInARow = 0
+                notIterableInARow = 0
+
                 break;
             } catch (e) {
                 console.error(
                     `failed to get categories from route ${secondLevelCategory}, retrying: ${e}`
                 );
+
+                if (undefinedInARow === 6) {
+                    // todo: add proxy switching
+                    undefinedInARow = 0
+                    break
+                }
+
+                if (notIterableInARow === 6) {
+                    notIterableInARow = 0
+                    break
+                }
             }
         }
     }
@@ -167,7 +195,7 @@ async function parseProductsAndSaveInDb(page, db) {
     for (const category of categories) {
         while (true) {
             try {
-                await new Promise((resolve) => setTimeout(resolve, 5000));
+                await new Promise((resolve) => setTimeout(resolve, 6000));
                 const state = await getState(page, `https://lemanapro.ru${category.url}`);
                 if ('404-header' in state) {
                     console.log(`got 404 from category ${category.url}, skipping it!`);
@@ -177,7 +205,7 @@ async function parseProductsAndSaveInDb(page, db) {
                 for (let pageNumber = 1; pageNumber <= pages; pageNumber++) {
                     while (true) {
                         try {
-                            await new Promise((resolve) => setTimeout(resolve, 5000));
+                            await new Promise((resolve) => setTimeout(resolve, 6000));
                             console.log(`getting products from category ${category.url}, page ${pageNumber}`)
                             const state = await getState(page, `https://lemanapro.ru${category.url}/?page=${pageNumber}`);
                             const products = state.plp.plp.plp.products.productsList;
@@ -229,14 +257,14 @@ async function parseProductsAndSaveInDb(page, db) {
 async function parse(page, db) {
     console.log("parsing started");
 
-    // console.log("parsing categories");
-    // const state = await getState(page, "https://lemanapro.ru/catalogue/");
-    // await parseCategoriesAndSaveInDb(page, db, state);
-    // console.log("done parsing categories");
+    console.log("parsing categories");
+    const state = await getState(page, "https://lemanapro.ru/catalogue/");
+    await parseCategoriesAndSaveInDb(page, db, state);
+    console.log("done parsing categories");
 
-    // console.log("parsing stores");
-    // await parseStoresAndSaveInDb(page, db);
-    // console.log("done parsing stores");
+    console.log("parsing stores");
+    await parseStoresAndSaveInDb(page, db);
+    console.log("done parsing stores");
 
 
     console.log("parsing products");
