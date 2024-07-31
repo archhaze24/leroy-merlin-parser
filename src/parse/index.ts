@@ -4,23 +4,24 @@ import parseCategoriesAndSaveInDb from "./parseCategories.js";
 import parseProductsAndSaveInDb from "./parseProducts.js";
 import parseStoresAndSaveInDb from "./parseStores.js";
 import { PrismaClient } from "@prisma/client";
+import logger from "../logger.js";
 
 async function parse(page: Page, db: PrismaClient) {
-  console.log("parsing started");
+  logger.info("parsing started");
 
-  console.log("parsing categories");
+  logger.info("parsing categories");
   const state = await getState(page, "https://lemanapro.ru/catalogue/");
-  console.log(state);
+  logger.info(state);
   await parseCategoriesAndSaveInDb(page, db, state);
-  console.log("done parsing categories");
+  logger.info("done parsing categories");
 
-  console.log("parsing stores");
+  logger.info("parsing stores");
   await parseStoresAndSaveInDb(page, db);
-  console.log("done parsing stores");
+  logger.info("done parsing stores");
 
-  console.log("parsing products");
+  logger.info("parsing products");
   await parseProductsAndSaveInDb(page, db);
-  console.log("done parsing products");
+  logger.info("done parsing products");
 }
 
 export default parse;

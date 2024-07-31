@@ -3,6 +3,7 @@ import getState from "./helpers/getState.js";
 import { PrismaClient } from "@prisma/client";
 import qrator from "../constants/qrator.js";
 import api from "../constants/api.js";
+import logger from "../logger.js";
 
 async function parseProductsAndSaveInDb(page: Page, db: PrismaClient) {
   const categories = await db.category.findMany();
@@ -16,7 +17,7 @@ async function parseProductsAndSaveInDb(page: Page, db: PrismaClient) {
           `https://lemanapro.ru${category.url}`
         );
         if ("404-header" in state) {
-          console.log(`got 404 from category ${category.url}, skipping it!`);
+          logger.info(`got 404 from category ${category.url}, skipping it!`);
           break;
         }
         const pages = Math.ceil(state.plp.plp.plp.products.productsCount / 30);
@@ -24,7 +25,7 @@ async function parseProductsAndSaveInDb(page: Page, db: PrismaClient) {
           while (true) {
             try {
               await new Promise((resolve) => setTimeout(resolve, 6000));
-              console.log(
+              logger.info(
                 `getting products from category ${category.url}, page ${pageNumber}`
               );
               const state = await getState(

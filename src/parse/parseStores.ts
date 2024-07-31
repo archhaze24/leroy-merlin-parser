@@ -3,9 +3,10 @@ import { Page } from "puppeteer";
 import api from "../constants/api.js";
 import qrator from "../constants/qrator.js";
 import getState from "./helpers/getState.js";
+import logger from "../logger.js";
 
 async function parseStoresAndSaveInDb(page: Page, db: PrismaClient) {
-  console.log("trying to get api key");
+  logger.info("trying to get api key");
   while (true) {
     try {
       const state = await getState(
@@ -17,7 +18,7 @@ async function parseStoresAndSaveInDb(page: Page, db: PrismaClient) {
       }
 
       api.key = state.pdp.pdp.env.API_KEY;
-      console.log(`got api key: ${api.key}`);
+      logger.info(`got api key: ${api.key}`);
 
       break;
     } catch (e) {
@@ -25,7 +26,7 @@ async function parseStoresAndSaveInDb(page: Page, db: PrismaClient) {
     }
   }
 
-  console.log("trying to fetch stores");
+  logger.info("trying to fetch stores");
 
   while (true) {
     try {

@@ -2,6 +2,7 @@ import { Page } from "puppeteer";
 import child_process from "child_process";
 import qrator from "../constants/qrator.js";
 import { join } from "path";
+import logger from "../logger.js";
 
 async function getAndSetNewQratorKey(page: Page) {
   try {
@@ -21,7 +22,7 @@ async function getAndSetNewQratorKey(page: Page) {
       });
 
       pythonProcess.stderr.on("error", (err) => {
-        console.log(err);
+        logger.error(err);
       });
     });
 
@@ -30,7 +31,7 @@ async function getAndSetNewQratorKey(page: Page) {
     console.error(`${e}, retrying`);
   }
 
-  console.log(`got new qrator_jsid: ${qrator.jsid}`);
+  logger.info(`got new qrator_jsid: ${qrator.jsid}`);
   await page.setCookie({
     name: "qrator_jsid",
     value: qrator.jsid,

@@ -2,6 +2,7 @@ import { Page } from "puppeteer";
 import getState from "./helpers/getState.js";
 import { PrismaClient } from "@prisma/client";
 import isIterable from "./helpers/isIterable.js";
+import logger from "../logger.js";
 
 async function parseCategoriesAndSaveInDb(
   page: Page,
@@ -23,7 +24,7 @@ async function parseCategoriesAndSaveInDb(
     let notIterableInARow = 0;
     let undefinedInARow = 0;
     while (true) {
-      console.log(`getting categories from route ${secondLevelCategory}`);
+      logger.info(`getting categories from route ${secondLevelCategory}`);
       await new Promise((resolve) => setTimeout(resolve, 6000));
       try {
         const state = await getState(

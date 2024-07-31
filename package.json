@@ -12,11 +12,17 @@
   "dependencies": {
     "@prisma/client": "^5.17.0",
     "@stableproxy/puppeteer-page-proxy": "^2.3.2",
+    "cache-manager": "^5.7.4",
     "dotenv": "^16.4.5",
+    "pm2": "^5.4.2",
     "prisma": "^5.17.0",
-    "puppeteer": "^22.14.0"
+    "puppeteer": "^22.14.0",
+    "random-useragent": "^0.5.0",
+    "selenium-webdriver": "^4.23.0",
+    "winston": "^3.13.1"
   },
   "devDependencies": {
+    "@types/random-useragent": "^0.3.3",
     "typescript": "^5.5.4"
   }
 }
