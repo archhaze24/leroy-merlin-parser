@@ -1,6 +1,6 @@
 import { Page } from "puppeteer";
 import getState from "./helpers/getState.js";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma/client.js";
 import isIterable from "./helpers/isIterable.js";
 import logger from "../logger.js";
 

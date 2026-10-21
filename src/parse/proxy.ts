@@ -5,7 +5,6 @@ import useProxy from "@stableproxy/puppeteer-page-proxy";
 import cache from "../cache.js";
 import logger from "../logger.js";
 import qrator from "../constants/qrator.js";
-import randomUseragent from "random-useragent";
 
 export type HttpProxy = {
   url: string;

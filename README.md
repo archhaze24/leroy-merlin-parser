@@ -1,5 +1,7 @@
 # leroy-merlin-parser
 
+#### !! the repository is not being maintained. use at your own risk. idk if it still works !!
+
 ## first run:
 
 create .env from .env.example template, and fill it
@@ -9,16 +11,18 @@ source venv/bin/activate # in more recent python versions it can be venv/Scripts
 pip install selenium
 sudo cp chromedriver /usr/local/bin/ # or add it to path manually
 docker compose up -d
-npm i
-npx prisma migrate dev
-npm start
+pnpm install
+pnpm exec prisma migrate dev
+pnpm start
 ```
+
+requires node 22.12+ and pnpm (`corepack enable` gets it from `packageManager` in package.json)
 
 ## non-first runs:
 ```bash
 docker compose up -d # if not up
 source venv/bin/activate
-npm start
+pnpm start
 ```
 
 ## troubleshooting:

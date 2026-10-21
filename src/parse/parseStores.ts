@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma/client.js";
 import { Page } from "puppeteer";
 import api from "../constants/api.js";
 import qrator from "../constants/qrator.js";

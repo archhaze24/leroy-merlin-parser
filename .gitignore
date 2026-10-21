@@ -3,5 +3,6 @@ node_modules
 .env
 venv
 dist
+src/generated
 combined.log
 error.log

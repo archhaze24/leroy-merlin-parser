@@ -3,7 +3,7 @@ import getState from "./helpers/getState.js";
 import parseCategoriesAndSaveInDb from "./parseCategories.js";
 import parseProductsAndSaveInDb from "./parseProducts.js";
 import parseStoresAndSaveInDb from "./parseStores.js";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma/client.js";
 import logger from "../logger.js";
 
 async function parse(page: Page, db: PrismaClient) {

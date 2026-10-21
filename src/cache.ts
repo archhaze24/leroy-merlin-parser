@@ -1,9 +1,7 @@
-import { createCache, memoryStore } from "cache-manager";
+import { createCache } from "cache-manager";
 
-const cache = createCache(
-  memoryStore({
-    ttl: 10 * 1000,
-  })
-);
+const cache = createCache({
+  ttl: 10 * 1000,
+});
 
 export default cache;
